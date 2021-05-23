@@ -18,8 +18,9 @@ $AADAppSecret = $config.AADAppSecret
 
 # Change mapping here
 $account = [PSCustomObject]@{
-    userPrincipalName = $p.Accounts.MicrosoftActiveDirectory.userPrincipalName
-    email = $p.Contact.Personal.Email;
+    userPrincipalName       = $p.Accounts.MicrosoftActiveDirectory.userPrincipalName
+    email                   = $p.Contact.Personal.Email;
+    onlySetEmailWhenEmpty   = $false;
 };
 
 $aRef = $account.userPrincipalName
@@ -77,24 +78,28 @@ try{
             Write-Verbose -Verbose "Successfully updated Email Authentication Method : $($account.email) for $($account.userPrincipalName)"  
         }else{
             $currentEmail = ($getEmailAuthenticationMethodResponseValue | Where-Object {$_.id -eq '3ddfcfc8-9383-446f-83cc-3ab9be4be18f'}).emailAddress
-            Write-Verbose -Verbose "Updating current Email Authentication Method : $currentEmail for $($account.userPrincipalName).."
+            if($account.onlySetMobileWhenEmpty -eq $true){
+                Write-Verbose -Verbose "Email Authentication Method  set to only update when empty. Since this already contains data ($currentEmail), skipped update for $($account.userPrincipalName)"
+            }else{
+                Write-Verbose -Verbose "Updating current Email Authentication Method : $currentEmail for $($account.userPrincipalName).."
 
-            $previousAccount = [PSCustomObject]@{
-                userPrincipalName = $account.userPrincipalName
-                email = $currentEmail;
-            }            
+                $previousAccount = [PSCustomObject]@{
+                    userPrincipalName = $account.userPrincipalName
+                    email = $currentEmail;
+                }            
 
-            $baseUri = "https://graph.microsoft.com/"
-            $addEmailAuthenticationMethodUri = $baseUri + "/beta/users/$($account.userPrincipalName)/authentication/emailMethods/3ddfcfc8-9383-446f-83cc-3ab9be4be18f"
-        
-            $body = @{
-                "emailAddress" = $($account.email)
+                $baseUri = "https://graph.microsoft.com/"
+                $addEmailAuthenticationMethodUri = $baseUri + "/beta/users/$($account.userPrincipalName)/authentication/emailMethods/3ddfcfc8-9383-446f-83cc-3ab9be4be18f"
+            
+                $body = @{
+                    "emailAddress" = $($account.email)
+                }
+                $bodyJson = $body | ConvertTo-Json -Depth 10
+            
+                $addEmailAuthenticationMethodResponse = Invoke-RestMethod -Uri $addEmailAuthenticationMethodUri -Method Put -Headers $authorization -Body $bodyJson -Verbose:$false
+            
+                Write-Verbose -Verbose "Successfully updated Email Authentication Method : $($account.email) for $($account.userPrincipalName)"
             }
-            $bodyJson = $body | ConvertTo-Json -Depth 10
-        
-            $addEmailAuthenticationMethodResponse = Invoke-RestMethod -Uri $addEmailAuthenticationMethodUri -Method Put -Headers $authorization -Body $bodyJson -Verbose:$false
-        
-            Write-Verbose -Verbose "Successfully updated Email Authentication Method : $($account.email) for $($account.userPrincipalName)"
         }
     }
 

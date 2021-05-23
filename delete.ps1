@@ -78,7 +78,6 @@ try{
         
             Write-Verbose -Verbose "Successfully deleted Email Authentication Method : $currentEmail for $($account.userPrincipalName)"
         }
-
     }
 
     $auditLogs.Add([PSCustomObject]@{

@@ -18,48 +18,50 @@ $AADAppSecret = $config.AADAppSecret
 
 # Change mapping here
 $account = [PSCustomObject]@{
-    userPrincipalName = $p.Accounts.AzureAD.userPrincipalName
+    userPrincipalName = $p.Accounts.MicrosoftActiveDirectory.userPrincipalName
     email = $p.Contact.Personal.Email;
 };
 
 $aRef = $account.userPrincipalName
 
-if(-Not($dryRun -eq $True)) {
-    try{
-        Write-Verbose -Verbose "Generating Microsoft Graph API Access Token.."
-        $baseUri = "https://login.microsoftonline.com/"
-        $authUri = $baseUri + "$AADTenantID/oauth2/token"
+try{
+    Write-Verbose -Verbose "Generating Microsoft Graph API Access Token.."
+    $baseUri = "https://login.microsoftonline.com/"
+    $authUri = $baseUri + "$AADTenantID/oauth2/token"
+
+    $body = @{
+        grant_type      = "client_credentials"
+        client_id       = "$AADAppId"
+        client_secret   = "$AADAppSecret"
+        resource        = "https://graph.microsoft.com"
+    }
+
+    $Response = Invoke-RestMethod -Method POST -Uri $authUri -Body $body -ContentType 'application/x-www-form-urlencoded'
+    $accessToken = $Response.access_token;
+
+    #Add the authorization header to the request
+    $authorization = @{
+        Authorization = "Bearer $accesstoken";
+        'Content-Type' = "application/json";
+        Accept = "application/json";
+    }
+
+    Write-Verbose -Verbose "Gathering current Email Authentication Methods for $($account.userPrincipalName).."
+
+    $baseUri = "https://graph.microsoft.com/"
+    $getEmailAuthenticationMethodUri = $baseUri + "/beta/users/$($account.userPrincipalName)/authentication/emailMethods"
+
+    $getEmailAuthenticationMethodResponse = Invoke-RestMethod -Uri $getEmailAuthenticationMethodUri -Method Get -Headers $authorization -Verbose:$fals
+    $getEmailAuthenticationMethodResponseValue = $getEmailAuthenticationMethodResponse.value
+    Write-Verbose -Verbose ("Email authentication method: " + ($getEmailAuthenticationMethodResponseValue | Out-String) )
     
-        $body = @{
-            grant_type      = "client_credentials"
-            client_id       = "$AADAppId"
-            client_secret   = "$AADAppSecret"
-            resource        = "https://graph.microsoft.com"
-        }
-    
-        $Response = Invoke-RestMethod -Method POST -Uri $authUri -Body $body -ContentType 'application/x-www-form-urlencoded'
-        $accessToken = $Response.access_token;
-    
-        #Add the authorization header to the request
-        $authorization = @{
-            Authorization = "Bearer $accesstoken";
-            'Content-Type' = "application/json";
-            Accept = "application/json";
-        }
-    
-        Write-Verbose -Verbose "Gathering current Email Authentication Methods for $($account.userPrincipalName).."
-    
-        $baseUri = "https://graph.microsoft.com/"
-        $getEmailAuthenticationMethodUri = $baseUri + "/beta/users/$($account.userPrincipalName)/authentication/emailMethods"
-    
-        $getEmailAuthenticationMethodResponse = Invoke-RestMethod -Uri $getEmailAuthenticationMethodUri -Method Get -Headers $authorization -Verbose:$false
-    
-        $getEmailAuthenticationMethodResponseValue = $getEmailAuthenticationMethodResponse.value
-        $authenticationMethodSet = $false;
-        if( !([string]::IsNullOrEmpty(($getEmailAuthenticationMethodResponseValue | Out-String))) ){
-            $authenticationMethodSet = $true;
-        }
-    
+    $authenticationMethodSet = $false;
+    if( !([string]::IsNullOrEmpty(($getEmailAuthenticationMethodResponseValue | Out-String))) ){
+        $authenticationMethodSet = $true;
+    }
+
+    if(-Not($dryRun -eq $True)) {
+
         if($authenticationMethodSet -eq $false){
             Write-Verbose -Verbose "No Email Authentication set. Adding Email Authentication Method : $($account.email) for $($account.userPrincipalName).."
         
@@ -95,22 +97,22 @@ if(-Not($dryRun -eq $True)) {
         
             Write-Verbose -Verbose "Successfully updated Email Authentication Method : $($account.email) for $($account.userPrincipalName)"
         }
-
-        $auditLogs.Add([PSCustomObject]@{
-            Action = "CreateAccount"
-            Message = "Correlated to and updated Azure MFA settings of account with UPN $($aRef)"
-            IsError = $false;
-        });
-
-        $success = $true;    
-    }catch{
-        $auditLogs.Add([PSCustomObject]@{
-            Action = "CreateAccount"
-            Message = "Error correlating to and updating Azure MFA settings of account with UPN $($aRef): $($_)"
-            IsError = $True
-        });
-        Write-Error $_;
     }
+
+    $auditLogs.Add([PSCustomObject]@{
+        Action = "CreateAccount"
+        Message = "Correlated to and updated Azure MFA settings of account with UPN $($aRef)"
+        IsError = $false;
+    });
+
+    $success = $true;    
+}catch{
+    $auditLogs.Add([PSCustomObject]@{
+        Action = "CreateAccount"
+        Message = "Error correlating to and updating Azure MFA settings of account with UPN $($aRef): $($_)"
+        IsError = $True
+    });
+    Write-Error $_;
 }
 
 # Send results

@@ -4,20 +4,45 @@
 |:---------------------------|
 | This repository contains the connector and configuration code only. The implementer is responsible to acquire the connection details such as username, password, certificate, etc. You might even need to sign a contract or agreement with the supplier before implementing this connector. Please contact the client's application manager to coordinate the connector requirements.       |
 
-<br />
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/69046642/163960892-441e6361-cce2-477b-9bdb-b61452c2d077.png">
+</p>
+
+## Versioning
+| Version | Description | Date |
+| - | - | - |
+| 1.1.0   | Updated to support deleted users and improved logging | 2022/08/05  |
+| 1.0.0   | Initial release | 2021/05/14  |
 
 <!-- TABLE OF CONTENTS -->
 ## Table of Contents
-* [Introduction](#introduction)
-* [Getting the Azure AD graph API access](#getting-the-azure-ad-graph-api-access)
-  * [Application Registration](#application-registration)
-  * [Configuring App Permissions](#configuring-app-permissions)
-  * [Authentication and Authorization](#authentication-and-authorization)
+- [HelloID-Conn-Prov-Target-Azure-MFASettings-Email](#helloid-conn-prov-target-azure-mfasettings-email)
+  - [Versioning](#versioning)
+  - [Table of Contents](#table-of-contents)
+  - [Introduction](#introduction)
+  - [Getting the Azure AD graph API access](#getting-the-azure-ad-graph-api-access)
+    - [Application Registration](#application-registration)
+    - [Configuring App Permissions](#configuring-app-permissions)
+    - [Authentication and Authorization](#authentication-and-authorization)
+    - [Prerequisites](#prerequisites)
+    - [Remarks](#remarks)
+  - [Getting help](#getting-help)
+  - [HelloID docs](#helloid-docs)
 
 ## Introduction
 The interface to communicate with Microsoft Azure AD is through the Microsoft Graph API.
 
 With this connector we can create the set the MFA Phone methods, optionally we can enable the SMS Sign In as well.
+
+> Note that this makes use of beta endpoints of the Microsoft Graph API.
+
+The HelloID connector consists of the template scripts shown in the following table.
+
+| Action                          | Action(s) Performed                                                   | Comment   | 
+| ------------------------------- | --------------------------------------------------------------------- | --------- |
+| create.ps1                      | Correlate to and add/update MFA email method of AzureAD user  |           |
+| update.ps1                      | Update MFA email method of AzureAD user                        |           |
+| delete.ps1                      | Delete MFA email method of AzureAD user                        | Be careful when implementing this! There is no way to restore deleted the data. |
 
 <!-- GETTING STARTED -->
 ## Getting the Azure AD graph API access
@@ -43,7 +68,6 @@ Select the application we created before, and select “<b>API Permissions</b>�
 To assign a new permission to your application, click the “<b>Add a permission</b>” button.
 From the “<b>Request API Permissions</b>” screen click “<b>Microsoft Graph</b>”.
 For this connector the following permissions are used as <b>Application permissions</b>:
-*	Read all user’s authentication methods by using <b><i>UserAuthenticationMethod.Read.All</i></b>
 *	Read and Write aall user’s authentication methods by using <b><i>UserAuthenticationMethod.ReadWrite.All</i></b>
 
 These permissions are based on the Microsoft docs articles:
@@ -69,5 +93,20 @@ There are multiple ways to authenticate to the Graph API with each has its own p
 *	It's IMPORTANT to copy the newly generated client secret, because you cannot see the value anymore after you close the page.
 *	At least we need to get is the <b>Tenant ID</b>. This can be found in the Azure Portal by going to <b>Azure Active Directory > Custom Domain Names</b>, and then finding the .onmicrosoft.com domain.
 
-# HelloID Docs
+### Prerequisites
+- Azure AD environment
+- Registered App Registration in AzureAD with permission to Microsoft Graph API UserAuthenticationMethod.ReadWrite.All. The following values are needed to connect
+  - Tenant ID
+  - Applciation ID
+  - Application Secret
+
+### Remarks
+ - We make use of beta endpoints of the Microsoft Graph API. We cannot guarantuee their functionality.
+
+## Getting help
+> _For more information on how to configure a HelloID PowerShell connector, please refer to our [documentation](https://docs.helloid.com/hc/en-us/articles/360012558020-Configure-a-custom-PowerShell-target-system) pages_
+
+> _If you need help, feel free to ask questions on our [forum](https://forum.helloid.com)_
+
+## HelloID docs
 The official HelloID documentation can be found at: https://docs.helloid.com/

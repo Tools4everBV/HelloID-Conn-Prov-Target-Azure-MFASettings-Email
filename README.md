@@ -1,5 +1,15 @@
 # HelloID-Conn-Prov-Target-Azure-MFASettings-Email
 
+> [!WARNING]  
+> **ARCHIVED CONNECTOR**  
+> This connector is archived and no longer maintained. The functionality has been moved to the Microsoft Entra ID / Exchange Online connector.  
+>   
+> **New location:**  
+> [HelloID-Conn-Prov-Target-Microsoft-Entra-ID-Exchange-Online/permissions/emailAuthenticationMethods](https://github.com/Tools4everBV/HelloID-Conn-Prov-Target-Microsoft-Entra-ID-Exchange-Online/tree/main/permissions/emailAuthenticationMethods) 
+>   
+> Please use the new repository for any new implementations or updates.
+>
+> 
 | :information_source: Information |
 |:---------------------------|
 | This repository contains the connector and configuration code only. The implementer is responsible to acquire the connection details such as username, password, certificate, etc. You might even need to sign a contract or agreement with the supplier before implementing this connector. Please contact the client's application manager to coordinate the connector requirements.       |
